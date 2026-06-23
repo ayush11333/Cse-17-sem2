@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Amazon Clone - Working Search & Cart</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* --- 1. BASIC RESET --- */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background-color: #e3e6e6;
+            padding-bottom: 50px;
+        }
+
+        /* --- 2. HEADER SECTION --- */
+        .header {
+            background-color: #131921;
+            padding: 10px;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .nav-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: white;
+            margin-bottom: 10px;
+        }
+
+        .menu-logo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .amazon-logo {
+            font-size: 20px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .amazon-logo span { color: #febd69; }
+
+        .nav-right {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            font-size: 14px;
+        }
+
+        .cart-icon {
+            font-size: 24px;
+            position: relative;
+            cursor: pointer;
+        }
+        
+        .cart-count {
+            position: absolute;
+            top: -8px;
+            right: -5px;
+            background: #f08804;
+            color: white;
+            font-size: 10px;
+            padding: 2px 5px;
+            border-radius: 50%;
+            font-weight: bold;
+        }
+
+        /* Search Bar */
+        .search-container {
+            display: flex;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 10px;
+            border: none;
+            outline: none;
+            font-size: 15px;
+        }
+
+        .search-btn {
+            background-color: #febd69;
+            border: none;
+            padding: 0 15px;
+            cursor: pointer;
+        }
+
+        /* --- 3. SUB-HEADER --- */
+        .location-bar {
+            background-color: #232f3e;
+            color: white;
+            padding: 10px;
+            font-size: 12px;
+        }
+
+        /* --- 4. CATEGORIES --- */
+        .categories {
+            display: flex;
+            overflow-x: auto;
+            background: white;
+            padding: 10px;
+        }
+
+        .cat-item {
+            min-width: 80px;
+            text-align: center;
+            font-size: 12px;
+            margin-right: 10px;
+            cursor: pointer;
+        }
+        .cat-img {
+            width: 50px;
+            height: 50px;
+            object-fit: contain;
+        }
+
+        /* --- 5. HERO BANNER --- */
+        .hero-banner {
+            width: 100%;
+            height: 180px;
+            background: url('https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=800&q=80') center/cover no-repeat;
+            position: relative;
+        }
+        .hero-banner::after {
+            content: "";
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 80px;
+            background: linear-gradient(to bottom, transparent, #e3e6e6);
+        }
+
+        /* --- 6. PRODUCT GRID --- */
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+            gap: 15px;
+            padding: 15px;
+            margin-top: -40px;
+            position: relative;
+            z-index: 10;
+        }
+
+        .product-card {
+            background: white;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .p-img {
+            width: 100%;
+            height: 160px;
+            object-fit: contain;
+            margin-bottom: 10px;
+        }
+
+        .p-title {
+            font-size: 14px;
+            color: #0F1111;
+            height: 38px;
+            overflow: hidden;
+        }
+
+        .rating {
+            font-size: 12px;
+            color: #ffa41c;
+            margin-bottom: 5px;
+        }
+
+        .price-row {
+            font-size: 21px;
+            font-weight: 500;
+            margin-bottom: 5px;
+        }
+
+        .prime-badge {
+            font-size: 12px;
+            color: #00a8e1;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .add-btn {
+            background-color: #ffd814;
+            border: none;
+            padding: 8px;
+            border-radius: 20px;
+            cursor: pointer;
+            width: 100%;
+            transition: 0.2s;
+        }
+        .add-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* No Results Message Styling */
+        .no-results {
+            grid-column: 1 / -1;
+            background: white;
+            padding: 30px;
+            text-align: center;
+            font-size: 18px;
+            color: #333;
+            border-radius: 5px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <header class="header">
+        <div class="nav-top">
+            <div class="menu-logo">
+                <i class="fa-solid fa-bars" style="color:white; font-size:22px;"></i>
+                <div class="amazon-logo" onclick="clearSearch()">amazon<span>.in</span></div>
+            </div>
+            <div class="nav-right">
+                <span>Sign in <i class="fa-solid fa-user"></i></span>
+                <!-- Cart Reset Feature added on click -->
+                <div class="cart-icon" onclick="resetCart()">
+                    <i class="fa-solid fa-cart-shopping"></i>
+                    <!-- Started the initial cart count at 0 -->
+                    <span class="cart-count" id="cartBadge">0</span>
+                </div>
+            </div>
+        </div>
+        <div class="search-container">
+            <input type="text" id="amazonSearch" class="search-input" placeholder="Search Amazon.in" oninput="searchProducts()">
+            <button class="search-btn" onclick="searchProducts()"><i class="fa-solid fa-magnifying-glass"></i></button>
+        </div>
+    </header>
+
+    <div class="location-bar">
+        <i class="fa-solid fa-location-dot"></i> Deliver to <strong>New Delhi 110001</strong>
+    </div>
+
+    <div class="categories">
+        <div class="cat-item" onclick="searchByCategory('Mobiles')"><img src="https://images.unsplash.com/photo-1598327105666-5b89351aff70?w=100" class="cat-img"><br>Mobiles</div>
+        <div class="cat-item" onclick="searchByCategory('Fashion')"><img src="https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=100" class="cat-img"><br>Fashion</div>
+        <div class="cat-item" onclick="searchByCategory('Electronics')"><img src="https://images.unsplash.com/photo-1546868871-7041f2a55e12?w=100" class="cat-img"><br>Electronics</div>
+        <div class="cat-item" onclick="searchByCategory('Home')"><img src="https://images.unsplash.com/photo-1584669215886-2a71f005b829?w=100" class="cat-img"><br>Home</div>
+        <div class="cat-item" onclick="searchByCategory('Watches')"><img src="https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=100" class="cat-img"><br>Watches</div>
+        <div class="cat-item" onclick="searchByCategory('Laptops')"><img src="https://images.unsplash.com/photo-1603302576837-37561b2e2302?w=100" class="cat-img"><br>Laptops</div>
+    </div>
+
+    <div class="hero-banner"></div>
+
+    <div class="product-grid">
+        <div id="noResultsText" class="no-results">
+            No results found!<br>
+            <span style="font-size: 14px; color: #565959;">Check your spelling or try using different keywords.</span>
+        </div>
+
+        <!-- Product 1 -->
+        <div class="product-card">
+            <img src="https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&q=80" class="p-img">
+            <div class="p-title">Sony Wireless Noise Cancelling Headphones</div>
+            <div class="rating"><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><span>(1,240)</span></div>
+            <div class="price-row">₹14,990</div>
+            <div class="prime-badge">✔ prime</div>
+            <button class="add-btn" onclick="addToCart('Sony Wireless Headphones')">Add to Cart</button>
+        </div>
+
+        <!-- Product 2 -->
+        <div class="product-card">
+            <img src="https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=400&q=80" class="p-img">
+            <div class="p-title">Apple iPhone 13 (128GB) - Midnight Mobiles</div>
+            <div class="rating"><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><span>(54,000)</span></div>
+            <div class="price-row">₹52,999</div>
+            <div class="prime-badge">✔ prime</div>
+            <button class="add-btn" onclick="addToCart('Apple iPhone 13')">Add to Cart</button>
+        </div>
+
+        <!-- Product 3 -->
+        <div class="product-card">
+            <img src="https://images.unsplash.com/photo-1524805444758-089113d48a6d?w=400&q=80" class="p-img">
+            <div class="p-title">Fossil Gen 6 Smartwatch Black Watches</div>
+            <div class="rating"><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><span>(850)</span></div>
+            <div class="price-row">₹18,495</div>
+            <div class="prime-badge">✔ prime</div>
+            <button class="add-btn" onclick="addToCart('Fossil Gen 6 Smartwatch')">Add to Cart</button>
+        </div>
+
+        <!-- Product 4 -->
+        <div class="product-card">
+            <img src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400&q=80" class="p-img">
+            <div class="p-title">Nike Air Max Men's Running Shoes Fashion Clothing</div>
+            <div class="rating"><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><span>(2,100)</span></div>
+            <div class="price-row">₹8,295</div>
+            <div class="prime-badge">✔ prime</div>
+            <button class="add-btn" onclick="addToCart('Nike Air Max Shoes')">Add to Cart</button>
+        </div>
+
+        <!-- Product 5 -->
+        <div class="product-card">
+            <img src="https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=400&q=80" class="p-img">
+            <div class="p-title">Apple MacBook Air M1 Chip 13-inch Laptops</div>
+            <div class="rating"><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><span>(5,600)</span></div>
+            <div class="price-row">₹74,900</div>
+            <div class="prime-badge">✔ prime</div>
+            <button class="add-btn" onclick="addToCart('Apple MacBook Air M1')">Add to Cart</button>
+        </div>
+
+        <!-- Product 6 -->
+        <div class="product-card">
+            <img src="https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=400&q=80" class="p-img">
+            <div class="p-title">Canon EOS 1500D DSLR Camera Electronics</div>
+            <div class="rating"><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><span>(9,800)</span></div>
+            <div class="price-row">₹35,990</div>
+            <div class="prime-badge">✔ prime</div>
+            <button class="add-btn" onclick="addToCart('Canon EOS 1500D Camera')">Add to Cart</button>
+        </div>
+    </div>
+
+    <!-- JavaScript Search & Cart Logic -->
+    <script>
+        // --- 1. SEARCH LOGIC ---
+        function searchProducts() {
+            let input = document.getElementById('amazonSearch').value.toLowerCase().trim();
+            let cards = document.querySelectorAll('.product-card');
+            let noResults = document.getElementById('noResultsText');
+            let foundAny = false;
+
+            cards.forEach(card => {
+                let title = card.querySelector('.p-title').innerText.toLowerCase();
+                if (title.includes(input)) {
+                    card.style.display = "flex";
+                    foundAny = true;
+                } else {
+                    card.style.display = "none";
+                }
+            });
+
+            if (foundAny) {
+                noResults.style.display = "none";
+            } else {
+                noResults.style.display = "block";
+            }
+        }
+
+        function searchByCategory(catName) {
+            document.getElementById('amazonSearch').value = catName;
+            searchProducts();
+        }
+
+        function clearSearch() {
+            document.getElementById('amazonSearch').value = "";
+            searchProducts();
+        }
+
+        // --- 2. CART LOGIC ---
+        let currentCartCount = 0;
+
+        function addToCart(productName) {
+            // Increase the count variable
+            currentCartCount++;
+            
+            // Update the UI badge inner text
+            document.getElementById('cartBadge').innerText = currentCartCount;
+            
+            // Pop an alert message
+            alert('"' + productName + '" added to your cart successfully!');
+        }
+
+        // Click on the cart icon to clear/reset the counter back to zero
+        function resetCart() {
+            if (currentCartCount > 0) {
+                let clearConfirm = confirm("Do you want to empty your cart?");
+                if (clearConfirm) {
+                    currentCartCount = 0;
+                    document.getElementById('cartBadge').innerText = currentCartCount;
+                }
+            }
+        }
+    </script>
+</body>
+</html>
